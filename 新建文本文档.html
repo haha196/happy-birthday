@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>生日快乐</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body {
+    width: 100%; height: 100%;
+    overflow: hidden;
+    background: radial-gradient(ellipse at 50% 30%, #1a1035 0%, #0a0618 60%, #05030f 100%);
+    font-family: "PingFang SC", "Microsoft YaHei", sans-serif;
+  }
+  canvas { position: absolute; top: 0; left: 0; z-index: 1; }
+  .content {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+    z-index: 2;
+    width: 90%;
+  }
+  .cake {
+    font-size: 64px;
+    margin-bottom: 20px;
+    animation: float 3s ease-in-out infinite;
+    filter: drop-shadow(0 0 20px rgba(255,200,100,0.6));
+  }
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-14px); }
+  }
+  h1 {
+    font-size: clamp(30px, 8vw, 56px);
+    background: linear-gradient(90deg, #ffd86b, #ff8aae, #a78bfa, #ffd86b);
+    background-size: 300% 100%;
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    animation: shine 4s linear infinite, fadeUp 1.2s ease-out both;
+    margin-bottom: 18px;
+    letter-spacing: 2px;
+  }
+  @keyframes shine {
+    0% { background-position: 0% 50%; }
+    100% { background-position: 300% 50%; }
+  }
+  p.sub {
+    font-size: clamp(15px, 4vw, 20px);
+    color: #c9b8ff;
+    opacity: 0;
+    animation: fadeUp 1.2s ease-out 0.6s both;
+    letter-spacing: 3px;
+  }
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(24px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .wish {
+    margin-top: 34px;
+    font-size: clamp(13px, 3.5vw, 16px);
+    color: rgba(200,180,255,0.75);
+    opacity: 0;
+    animation: fadeUp 1.2s ease-out 1.4s both;
+    line-height: 1.9;
+  }
+  .heart {
+    display: inline-block;
+    animation: beat 1.4s ease-in-out infinite;
+    color: #ff8aae;
+  }
+  @keyframes beat {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.3); }
+  }
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div class="content">
+  <div class="cake">🎂</div>
+  <h1>祝我们的栩颖同志生日快乐</h1>
+  <p class="sub">天天开心 · 岁岁平安</p>
+  <div class="wish">
+    开心，不止此刻<br>
+    世间美好，都会相遇 </span>
+  </div>
+</div>
+
+<script>
+  const canvas = document.getElementById('c');
+  const ctx = canvas.getContext('2d');
+  let w, h;
+  function resize() {
+    w = canvas.width = window.innerWidth;
+    h = canvas.height = window.innerHeight;
+  }
+  resize();
+  window.addEventListener('resize', resize);
+
+  // 彩色粒子
+  const colors = ['#ffd86b', '#ff8aae', '#a78bfa', '#7dd3fc', '#86efac'];
+  const particles = [];
+  const COUNT = 90;
+
+  class Particle {
+    constructor() { this.reset(true); }
+    reset(init) {
+      this.x = Math.random() * w;
+      this.y = init ? Math.random() * h : h + 20;
+      this.size = Math.random() * 4 + 1.5;
+      this.speed = Math.random() * 1.2 + 0.4;
+      this.drift = (Math.random() - 0.5) * 0.8;
+      this.color = colors[Math.floor(Math.random() * colors.length)];
+      this.alpha = Math.random() * 0.6 + 0.3;
+      this.wobble = Math.random() * Math.PI * 2;
+    }
+    update() {
+      this.y -= this.speed;
+      this.wobble += 0.02;
+      this.x += this.drift + Math.sin(this.wobble) * 0.5;
+      if (this.y < -20) this.reset(false);
+    }
+    draw() {
+      ctx.beginPath();
+      ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+      ctx.fillStyle = this.color;
+      ctx.globalAlpha = this.alpha;
+      ctx.shadowBlur = 12;
+      ctx.shadowColor = this.color;
+      ctx.fill();
+      ctx.globalAlpha = 1;
+      ctx.shadowBlur = 0;
+    }
+  }
+
+  for (let i = 0; i < COUNT; i++) particles.push(new Particle());
+
+  // 偶尔绽放的小烟花
+  const sparks = [];
+  function spawnSpark() {
+    const x = Math.random() * w;
+    const y = Math.random() * h * 0.6;
+    const color = colors[Math.floor(Math.random() * colors.length)];
+    for (let i = 0; i < 18; i++) {
+      const angle = (Math.PI * 2 / 18) * i;
+      const speed = Math.random() * 2.5 + 1.5;
+      sparks.push({
+        x, y,
+        vx: Math.cos(angle) * speed,
+        vy: Math.sin(angle) * speed,
+        life: 1,
+        color
+      });
+    }
+  }
+  setInterval(spawnSpark, 2200);
+
+  function animate() {
+    ctx.clearRect(0, 0, w, h);
+
+    // 绘制粒子
+    particles.forEach(p => { p.update(); p.draw(); });
+
+    // 绘制火花
+    for (let i = sparks.length - 1; i >= 0; i--) {
+      const s = sparks[i];
+      s.x += s.vx;
+      s.y += s.vy;
+      s.vy += 0.04;
+      s.life -= 0.018;
+      if (s.life <= 0) { sparks.splice(i, 1); continue; }
+      ctx.beginPath();
+      ctx.arc(s.x, s.y, 2.2, 0, Math.PI * 2);
+      ctx.fillStyle = s.color;
+      ctx.globalAlpha = s.life;
+      ctx.shadowBlur = 14;
+      ctx.shadowColor = s.color;
+      ctx.fill();
+      ctx.globalAlpha = 1;
+      ctx.shadowBlur = 0;
+    }
+
+    requestAnimationFrame(animate);
+  }
+  animate();
+</script>
+</body>
+</html>
